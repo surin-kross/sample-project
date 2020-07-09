@@ -8,8 +8,9 @@ const babel = require("gulp-babel");
 
 function claspPush(resolve) {
   gutil.log("clasp push start");
+  const projectName = gutil.env.p;
   const child = spawn("clasp", ["push"], {
-    cwd: "./dist",
+    cwd: "./dist/" + projectName,
   });
   child.on("close", function (code) {
     if (code) throw Error(code);
@@ -25,6 +26,10 @@ gulp.task("uglify", function (resolve) {
     .pipe(gulp.dest("dist"));
   // src 폴더 아래의 모든 js 파일을 minify 해서 dist 폴더에 저장
   // minify 한 후 dist 폴더 내의 js 파일 clasp push
+
+  gulp.src("./src/**/.clasp.json").pipe(gulp.dest("dist"));
+  gulp.src("./src/**/appsscript.json").pipe(gulp.dest("dist"));
+  // resolve();
   claspPush(resolve);
 });
 
