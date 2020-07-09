@@ -6,6 +6,27 @@ const { spawn } = require("child_process");
 
 const babel = require("gulp-babel");
 
+function babelAndUglify(resolve) {
+  const projectName = gutil.env.p;
+  gulp
+    .src("./src/" + projectName + "/*.js")
+    .pipe(babel())
+    .pipe(uglify())
+    .pipe(gulp.dest("dist/" + projectName));
+  resolve();
+}
+
+function copyJson(resolve) {
+  const projectName = gutil.env.p;
+  gulp
+    .src("./src/" + projectName + "/.clasp.json")
+    .pipe(gulp.dest("./dist/" + projectName));
+  gulp
+    .src("./src/" + projectName + "/appsscript.json")
+    .pipe(gulp.dest("./dist/" + projectName));
+  resolve();
+}
+
 function claspPush(resolve) {
   gutil.log("clasp push start");
   const projectName = gutil.env.p;
@@ -18,23 +39,11 @@ function claspPush(resolve) {
   });
 }
 
-gulp.task("uglify", function (resolve) {
-  gulp
-    .src("./src/**/*.js")
-    .pipe(babel())
-    .pipe(uglify())
-    .pipe(gulp.dest("dist"));
-  // src 폴더 아래의 모든 js 파일을 minify 해서 dist 폴더에 저장
-  // minify 한 후 dist 폴더 내의 js 파일 clasp push
+function watch() {
+  const projectName = gutil.env.p;
+  gulp.watch("./src/**/*.js", gulp.series(babelAndUglify, claspPush));
+}
 
-  gulp.src("./src/**/.clasp.json").pipe(gulp.dest("dist"));
-  gulp.src("./src/**/appsscript.json").pipe(gulp.dest("dist"));
-  // resolve();
-  claspPush(resolve);
-});
+gulp.task("build", gulp.series(gulp.parallel(babelAndUglify, copyJson)));
 
-gulp.task("watch", function () {
-  gulp.watch("./src/**/*.js", gulp.series("uglify"));
-});
-
-gulp.task("default", gulp.series("uglify", "watch"));
+gulp.task("default", gulp.series(babelAndUglify, claspPush, watch));
